@@ -122,11 +122,11 @@ public class MainActivity extends BaseActivity {
 
        //post方式提交的数据
        FormBody formBody = new FormBody.Builder()
-               .add(key, value)
+               .add("username", key)
+               .add("password", value)
                .build();
 
        final Request request = new Request.Builder()
-               .header()
                .url(url)//请求的url
                .post(formBody)
                .build();
@@ -145,8 +145,7 @@ public class MainActivity extends BaseActivity {
            @Override
            public void onResponse(Call call, Response response) throws IOException {
 
-    //               EventBus.getDefault().post(response.body().string());
-                   Log.e("ERROR", response.body().string());
+                   EventBus.getDefault().post(response.body().string());
            }
        });
 
