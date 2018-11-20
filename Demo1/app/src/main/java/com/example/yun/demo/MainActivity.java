@@ -8,17 +8,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.yun.demo.beans.DataBean;
-import com.example.yun.demo.beans.Result;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -57,12 +53,11 @@ public class MainActivity extends BaseActivity {
         EventBus.getDefault().register(this);
     }
 
-
-    public <T>Object parseData(String response, Type cls)
-    {
+    //解析数据
+    public String parseData(String response) {
         Gson gson = new Gson();
-        Object obj = gson.fromJson(response, cls);
-        return obj;
+        DataBean dataBean = gson.fromJson(response, DataBean.class);
+        return dataBean.getName();
     }
 
     @Override
@@ -74,7 +69,7 @@ public class MainActivity extends BaseActivity {
     //EventBus接收消息的方法
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     public void onEvent(String name) {
-        Toast.makeText(this, "Hi"+name, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, name, Toast.LENGTH_SHORT).show();
     }
 
     @OnClick({R.id.button})
@@ -92,6 +87,30 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    //异步向服务器发送GET请求来获取数据
+    private void getDataAsync() {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        //2.创建Request对象，设置一个url地址,设置请求方式。
+        Request request = new Request.Builder().url(url).method("GET", null).build();
+        //3.创建一个call对象,参数就是Request请求对象
+        Call call = okHttpClient.newCall(request);
+        //4.请求加入调度，重写回调方法
+        call.enqueue(new Callback() {
+            //请求失败执行的方法
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("ERROR", e.toString());
+            }
+
+            //请求成功执行的方法
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String name = parseData(response.body().string());
+                EventBus.getDefault().post(name);
+
+            }
+        });
+    }
 
    public void postDataSync(String key, String value)
    {
@@ -103,11 +122,11 @@ public class MainActivity extends BaseActivity {
 
        //post方式提交的数据
        FormBody formBody = new FormBody.Builder()
-               .add("username", key)
-               .add("password", value)
+               .add(key, value)
                .build();
 
        final Request request = new Request.Builder()
+               .header()
                .url(url)//请求的url
                .post(formBody)
                .build();
@@ -126,23 +145,8 @@ public class MainActivity extends BaseActivity {
            @Override
            public void onResponse(Call call, Response response) throws IOException {
 
-
-               switch(response.code())
-               {
-                   case 400:
-                       Log.e("RESPONSE", response.body().string());
-                       break;
-                   case 200:
-                       Type dataType = new TypeToken<Result<DataBean>>(){}.getType();
-                       Result<DataBean> dataResult = (Result<DataBean>) parseData(response.body().string(), dataType);
-                       DataBean data = dataResult.data;
-                       EventBus.getDefault().post(data.getName());
-                       break;
-                   case 404:
-                       Log.e("RESPONSE", response.body().string());
-                       break;
-               }
-
+    //               EventBus.getDefault().post(response.body().string());
+                   Log.e("ERROR", response.body().string());
            }
        });
 
