@@ -28,7 +28,6 @@ public class Utrls {
             public void onResponse(Call call, Response response) throws IOException {
                 String name = parseData(response.body().string());
                 EventBus.getDefault().post(name);
-
             }
         });
     }
