@@ -49,6 +49,11 @@ public class MainActivity extends BaseActivity {
     Button button;
 
 
+    private final int PASSWORDNOTFOUND = 404;
+    private  final int USERDOESNOTEXIST = 400;
+    private final int REQUESTSUCCESS = 200;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,16 +134,16 @@ public class MainActivity extends BaseActivity {
 
                switch(response.code())
                {
-                   case 400:
+                   case USERDOESNOTEXIST:
                        Log.e("RESPONSE", response.body().string());
                        break;
-                   case 200:
+                   case REQUESTSUCCESS:
                        Type dataType = new TypeToken<Result<DataBean>>(){}.getType();
                        Result<DataBean> dataResult = (Result<DataBean>) parseData(response.body().string(), dataType);
                        DataBean data = dataResult.data;
                        EventBus.getDefault().post(data.getName());
                        break;
-                   case 404:
+                   case PASSWORDNOTFOUND:
                        Log.e("RESPONSE", response.body().string());
                        break;
                }
