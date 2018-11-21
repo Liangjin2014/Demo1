@@ -34,11 +34,12 @@ public class Utrls {
     }
 */
 
-      /*/解析数据
-    public String parseData(String response) {
-        Gson gson = new Gson();
-        DataBean dataBean = gson.fromJson(response, DataBean.class);
-        return dataBean.getName();*/
+      //解析数据
+      public static <T> Object parseData(String response, Type cls) {
+          Gson gson = new Gson();
+          Object obj = gson.fromJson(response, cls);
+          return obj;
+      }
     //}
 
     public interface ParameterizedType extends Type {

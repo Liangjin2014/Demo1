@@ -1,5 +1,6 @@
 package com.example.yun.demo;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -40,7 +41,7 @@ import okhttp3.Response;
 
 public class MainActivity extends BaseActivity {
 
-    private final String url = "http://192.168.0.103:9000/jsontest/";
+    private final String url = "http://192.168.0.103:9000/LoginANDRegister/login";
     @BindView(R.id.et_username)
     EditText etUsername;
     @BindView(R.id.et_password)
@@ -50,8 +51,10 @@ public class MainActivity extends BaseActivity {
 
 
     private final int PASSWORDNOTFOUND = 404;
-    private  final int USERDOESNOTEXIST = 400;
+    private final int USERDOESNOTEXIST = 400;
     private final int REQUESTSUCCESS = 200;
+    @BindView(R.id.bt_register)
+    Button btRegister;
 
 
     @Override
@@ -63,8 +66,7 @@ public class MainActivity extends BaseActivity {
     }
 
 
-    public <T>Object parseData(String response, Type cls)
-    {
+    public <T> Object parseData(String response, Type cls) {
         Gson gson = new Gson();
         Object obj = gson.fromJson(response, cls);
         return obj;
@@ -79,7 +81,7 @@ public class MainActivity extends BaseActivity {
     //EventBus接收消息的方法
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
     public void onEvent(String name) {
-        Toast.makeText(this, "Hi"+name, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Hi" + name, Toast.LENGTH_SHORT).show();
     }
 
     @OnClick({R.id.button})
@@ -87,69 +89,74 @@ public class MainActivity extends BaseActivity {
 //       getDataAsync();
         String username = etUsername.getText().toString();
         String password = etPassword.getText().toString();
-        if(!TextUtils.isEmpty(username.trim()) && !TextUtils.isEmpty(password.trim()))
-        {
+        if (!TextUtils.isEmpty(username.trim()) && !TextUtils.isEmpty(password.trim())) {
             postDataSync(username, password);
-        }
-        else
-        {
-            Toast.makeText(this,"姓名或密码不能为空哦！", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "姓名或密码不能为空哦！", Toast.LENGTH_LONG).show();
         }
     }
 
 
-   public void postDataSync(String key, String value)
-   {
-       OkHttpClient okHttpClient  = new OkHttpClient.Builder()
-               .connectTimeout(10, TimeUnit.SECONDS)
-               .writeTimeout(10,TimeUnit.SECONDS)
-               .readTimeout(20, TimeUnit.SECONDS)
-               .build();
+    public void postDataSync(String key, String value) {
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(20, TimeUnit.SECONDS)
+                .build();
 
-       //post方式提交的数据
-       FormBody formBody = new FormBody.Builder()
-               .add("username", key)
-               .add("password", value)
-               .build();
+        //post方式提交的数据
+        FormBody formBody = new FormBody.Builder()
+                .add("username", key)
+                .add("password", value)
+                .build();
 
-       final Request request = new Request.Builder()
-               .url(url)//请求的url
-               .post(formBody)
-               .build();
-
-
-       //创建/Call
-       Call call = okHttpClient.newCall(request);
-       //加入队列 异步操作
-       call.enqueue(new Callback() {
-           //请求错误回调方法
-           @Override
-           public void onFailure(Call call, IOException e) {
-               Log.e("ERROR", "链接失败！");
-           }
-
-           @Override
-           public void onResponse(Call call, Response response) throws IOException {
+        final Request request = new Request.Builder()
+                .url(url)//请求的url
+                .post(formBody)
+                .build();
 
 
-               switch(response.code())
-               {
-                   case USERDOESNOTEXIST:
-                       Log.e("RESPONSE", response.body().string());
-                       break;
-                   case REQUESTSUCCESS:
-                       Type dataType = new TypeToken<Result<DataBean>>(){}.getType();
-                       Result<DataBean> dataResult = (Result<DataBean>) parseData(response.body().string(), dataType);
-                       DataBean data = dataResult.data;
-                       EventBus.getDefault().post(data.getName());
-                       break;
-                   case PASSWORDNOTFOUND:
-                       Log.e("RESPONSE", response.body().string());
-                       break;
-               }
+        //创建/Call
+        Call call = okHttpClient.newCall(request);
+        //加入队列 异步操作
+        call.enqueue(new Callback() {
+            //请求错误回调方法
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("ERROR", "链接失败！");
+            }
 
-           }
-       });
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
 
-   }
+
+                switch (response.code()) {
+                    case USERDOESNOTEXIST:
+                        Log.e("RESPONSE", response.body().string());
+                        break;
+                    case REQUESTSUCCESS:
+                        Type dataType = new TypeToken<Result<DataBean>>() {
+                        }.getType();
+                        Result<DataBean> dataResult = (Result<DataBean>) parseData(response.body().string(), dataType);
+                        DataBean data = dataResult.data;
+                        EventBus.getDefault().post(data.getName());
+                        break;
+                    case PASSWORDNOTFOUND:
+                        Log.e("RESPONSE", response.body().string());
+                        break;
+                }
+
+            }
+        });
+
+    }
+
+    @OnClick(R.id.bt_register)
+    public void onViewClicked() {
+
+        Intent intent = new Intent(this, RegisterActivity.class);
+        startActivity(intent);
+    }
+
+
 }
