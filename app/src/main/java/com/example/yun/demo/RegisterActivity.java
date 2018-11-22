@@ -10,18 +10,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.yun.demo.beans.DataBean;
 import com.example.yun.demo.beans.Result;
 import com.example.yun.demo.utrls.Utrls;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -146,7 +143,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         if(result.getCode() == REGISTERSUCCESSCODE)
         {
-            Intent intent = new Intent(this, MainActivity.class);
+            Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
 
         }

@@ -2,161 +2,68 @@ package com.example.yun.demo;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
-
-import com.example.yun.demo.beans.DataBean;
-import com.example.yun.demo.beans.Result;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-/*
- * 解析Json数据，本程序集成了Gson，okHttp,eventbus框架
- *
- *
- *
- * */
+import io.vov.vitamio.MediaPlayer;
+import io.vov.vitamio.widget.MediaController;
+import io.vov.vitamio.widget.VideoView;
 
 public class MainActivity extends BaseActivity {
 
-    private final String url = "http://192.168.0.103:9000/LoginANDRegister/login";
-    @BindView(R.id.et_username)
-    EditText etUsername;
-    @BindView(R.id.et_password)
-    EditText etPassword;
-    @BindView(R.id.button)
-    Button button;
-
-
-    private final int PASSWORDNOTFOUND = 404;
-    private final int USERDOESNOTEXIST = 400;
-    private final int REQUESTSUCCESS = 200;
-    @BindView(R.id.bt_register)
-    Button btRegister;
-
+    @BindView(R.id.video_view)
+    VideoView videoView;
+    @BindView(R.id.ma_bt_login)
+    Button maBtLogin;
+    @BindView(R.id.ma_bt_regiater)
+    Button maBtRegiater;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        EventBus.getDefault().register(this);
+        playfunction();
     }
 
+    private void playfunction() {
+        String path = "";
+        path = "http://gslb.miaopai.com/stream/3D~8BM-7CZqjZscVBEYr5g__.mp4";
 
-    public <T> Object parseData(String response, Type cls) {
-        Gson gson = new Gson();
-        Object obj = gson.fromJson(response, cls);
-        return obj;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        EventBus.getDefault().unregister(this);
-    }
-
-    //EventBus接收消息的方法
-    @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
-    public void onEvent(String name) {
-        Toast.makeText(this, "Hi" + name, Toast.LENGTH_SHORT).show();
-    }
-
-    @OnClick({R.id.button})
-    public void onViewOnClicked(View view) {
-//       getDataAsync();
-        String username = etUsername.getText().toString();
-        String password = etPassword.getText().toString();
-        if (!TextUtils.isEmpty(username.trim()) && !TextUtils.isEmpty(password.trim())) {
-            postDataSync(username, password);
+        if (path == "") {
+            Toast.makeText(MainActivity.this,
+                    "Url path Shouldn't be empty!",
+                    Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(this, "姓名或密码不能为空哦！", Toast.LENGTH_LONG).show();
-        }
-    }
+            videoView.setVideoPath(path);
+            videoView.setMediaController(new MediaController(this));
+            videoView.requestFocus();
 
-
-    public void postDataSync(String key, String value) {
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .build();
-
-        //post方式提交的数据
-        FormBody formBody = new FormBody.Builder()
-                .add("username", key)
-                .add("password", value)
-                .build();
-
-        final Request request = new Request.Builder()
-                .url(url)//请求的url
-                .post(formBody)
-                .build();
-
-
-        //创建/Call
-        Call call = okHttpClient.newCall(request);
-        //加入队列 异步操作
-        call.enqueue(new Callback() {
-            //请求错误回调方法
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("ERROR", "链接失败！");
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-
-
-                switch (response.code()) {
-                    case USERDOESNOTEXIST:
-                        Log.e("RESPONSE", response.body().string());
-                        break;
-                    case REQUESTSUCCESS:
-                        Type dataType = new TypeToken<Result<DataBean>>() {
-                        }.getType();
-                        Result<DataBean> dataResult = (Result<DataBean>) parseData(response.body().string(), dataType);
-                        DataBean data = dataResult.data;
-                        EventBus.getDefault().post(data.getName());
-                        break;
-                    case PASSWORDNOTFOUND:
-                        Log.e("RESPONSE", response.body().string());
-                        break;
+            videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mp.setPlaybackSpeed(1.0f);
                 }
-
-            }
-        });
+            });
+        }
 
     }
 
-    @OnClick(R.id.bt_register)
-    public void onViewClicked() {
-
-        Intent intent = new Intent(this, RegisterActivity.class);
+    @OnClick({R.id.ma_bt_login, R.id.ma_bt_regiater})
+    public void onViewClicked(View view) {
+        Intent intent = null;
+        switch (view.getId()) {
+            case R.id.ma_bt_login:
+                intent = new Intent(MainActivity.this, LoginActivity.class);
+                break;
+            case R.id.ma_bt_regiater:
+                intent = new Intent(MainActivity.this, RegisterActivity.class);
+                break;
+        }
         startActivity(intent);
     }
-
-
 }

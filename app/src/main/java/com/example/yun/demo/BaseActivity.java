@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.vov.vitamio.Vitamio;
 
 public class BaseActivity extends Activity {
 
@@ -18,6 +19,8 @@ public class BaseActivity extends Activity {
         setContentView(R.layout.base_activity);
         //初始化butterknife
         ButterKnife.bind(this);
+        //初始化Vitamio
+        Vitamio.isInitialized(getApplicationContext());
     }
 
     @Override
