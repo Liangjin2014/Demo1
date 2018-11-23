@@ -1,6 +1,7 @@
 package com.example.yun.demo;
 
 import android.app.AppComponentFactory;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,10 +10,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.yun.demo.beans.DataBean;
 import com.example.yun.demo.beans.Result;
+import com.example.yun.demo.interfaces.LoginService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -22,6 +25,8 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -33,6 +38,12 @@ import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /*
  * 解析Json数据，本程序集成了Gson，okHttp,eventbus框架
@@ -44,6 +55,7 @@ import okhttp3.Response;
 public class LoginActivity extends AppCompatActivity {
 
     private final String url = "http://192.168.0.103:9000/LoginANDRegister/login";
+    private final String BASE_URL = "http://192.168.0.103:9000/";
     @BindView(R.id.et_username)
     EditText etUsername;
     @BindView(R.id.et_password)
@@ -91,8 +103,12 @@ public class LoginActivity extends AppCompatActivity {
 //       getDataAsync();
         String username = etUsername.getText().toString();
         String password = etPassword.getText().toString();
+        Map map = new HashMap();
+        map.put("username", username);
+        map.put("password", password);
         if (!TextUtils.isEmpty(username.trim()) && !TextUtils.isEmpty(password.trim())) {
-            postDataSync(username, password);
+//            postDataSync(username, password);
+              doRequestByRxRetrofit(map);
         } else {
             Toast.makeText(this, "姓名或密码不能为空哦！", Toast.LENGTH_LONG).show();
         }
@@ -160,5 +176,52 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+
+
+    private void doRequestByRxRetrofit(Map<String, String> params) {
+        final ProgressDialog pd = new ProgressDialog(this);
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)//基础URL 建议以 / 结尾
+                .addConverterFactory(GsonConverterFactory.create())//设置 Json 转换器
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())//RxJava 适配器
+                .build();
+        LoginService rxjavaService = retrofit.create(LoginService .class);
+        rxjavaService .getMessage(params)
+                .subscribeOn(Schedulers.io())//IO线程加载数据
+                .observeOn(AndroidSchedulers.mainThread())//主线程显示数据
+                .subscribe(new Subscriber<Result>() {
+                    @Override
+                    public void onCompleted() {
+
+                        if (pd != null && pd.isShowing()) {
+                            pd.dismiss();
+                        }
+                        pd.dismiss();
+                    }
+
+                    @Override//登陆失败的回调
+                    public void onError(Throwable e) {
+                        if (pd != null && pd.isShowing()) {
+                            pd.dismiss();
+                        }
+                        Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onNext(Result result) {
+                        if (pd != null && pd.isShowing()) {
+                            pd.dismiss();
+                        }
+                        Toast.makeText(LoginActivity.this, result.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+
+
+                    @Override
+                    public void onStart() {
+                        pd.onStart();
+
+                    }
+                });
+    }
 
 }
