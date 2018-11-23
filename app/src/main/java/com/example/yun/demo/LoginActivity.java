@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.example.yun.demo.beans.DataBean;
 import com.example.yun.demo.beans.Result;
+import com.example.yun.demo.dialogs.CustomProgressDialog;
 import com.example.yun.demo.interfaces.LoginService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -179,7 +180,8 @@ public class LoginActivity extends AppCompatActivity {
 
 
     private void doRequestByRxRetrofit(Map<String, String> params) {
-        final ProgressDialog pd = new ProgressDialog(this);
+        final CustomProgressDialog pd = new CustomProgressDialog(this, R.style.CustomDialog);
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)//基础URL 建议以 / 结尾
                 .addConverterFactory(GsonConverterFactory.create())//设置 Json 转换器
@@ -204,7 +206,7 @@ public class LoginActivity extends AppCompatActivity {
                         if (pd != null && pd.isShowing()) {
                             pd.dismiss();
                         }
-                        Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -212,16 +214,17 @@ public class LoginActivity extends AppCompatActivity {
                         if (pd != null && pd.isShowing()) {
                             pd.dismiss();
                         }
-                        Toast.makeText(LoginActivity.this, result.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, result.getMessage(), Toast.LENGTH_SHORT).show();
                     }
 
 
                     @Override
                     public void onStart() {
-                        pd.onStart();
+                        pd.show();
 
                     }
                 });
     }
+
 
 }
